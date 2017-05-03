@@ -1,0 +1,50 @@
+---
+title: "Untitled"
+author: "Teresa Domaszewska"
+date: "May 2, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Project report
+
+To perform given tasks, I downloaded the training and test data sets as .csv files and read them into R. The data set describes measurements from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. I excluded the columns with missing data in the training data set and visualized it's content, plotting the relationship of every variable and the variable  "classe", eg:
+
+```{r plot1}
+library(caret)
+testing <- read.csv("pml-testing.csv", header = TRUE)
+training <- read.csv("pml-training.csv", header = TRUE)
+
+training <- training [, -1]
+testing <- testing [, -1]
+
+training <- training [, colSums(is.na(training))<nrow(training)]
+training <- training [, colSums(is.na(training))==0]
+training <- training [, -c(11:19, 42:47, 51:59, 73:81)]
+testing <- testing [, colSums(is.na(testing))<nrow(testing)]
+testing <- testing [, colSums(is.na(testing))==0]
+
+plot(training$classe, training$roll_belt)
+plot(training$classe, training$total_accel_belt)
+```
+
+Some of the predictors presented bigger and some no influence on the predicted variable. Some of them could also be correlated. I decided to use all the predictors and random forest method without preprocessing to build the model with proximity measures calculated.
+
+```{r model}
+modFit <- train(classe~., data=training, method = "rf", prox = TRUE)
+pred <- predict(modFit, testing)
+```
+
+Cross validation has been performed as random sampling with replacement (bootstrapping) within the training data set. Reasampling results across tuning parameters:
+
+```{r error}
+modFit$results
+```
+
+The out of sample error will be larger than 0,01% (which is in-sample error).
+
+I decided to use random forest method including all predictors for which the data is available to include all available information in the model building.
+
